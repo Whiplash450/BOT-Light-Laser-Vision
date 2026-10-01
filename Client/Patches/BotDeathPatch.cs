@@ -22,6 +22,7 @@ public class BotDeathPatch : ModulePatch
         }
 
         int botId = __instance.Id;
+        BotRegistry.Unregister(__instance);
         LightDetectionService.ClearBot(botId);
         TriangulationService.ClearBot(botId);
     }

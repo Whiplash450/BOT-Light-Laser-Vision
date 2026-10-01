@@ -38,11 +38,9 @@ public class BotSoundStimulusPatch : ModulePatch
             cueWeight = 1;
         }
 
-        var bots = Object.FindObjectsOfType<BotOwner>();
-        if (bots == null) return;
-
+        // Iterate over fast active bot registry (zero scene hierarchy traversal)
         float rangeSqr = power * power;
-        foreach (var bot in bots)
+        foreach (var bot in BotRegistry.ActiveBots)
         {
             if (bot != null && (bot.Position - position).sqrMagnitude <= rangeSqr)
             {

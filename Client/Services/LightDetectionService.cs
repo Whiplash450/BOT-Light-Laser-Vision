@@ -18,13 +18,14 @@ public static class LightDetectionService
     }
 
     private static readonly Dictionary<int, BotLightState> BotStates = new(64);
-    private static readonly RaycastHit[] HitBuffer = new RaycastHit[16];
+    private static readonly List<Light> s_LightBuffer = new(16);
+    private static readonly List<LineRenderer> s_LineBuffer = new(16);
 
     // Frame raycast budget
     private static int _lastFrame;
     private static int _frameRaycasts;
 
-    // Cached player weapon device state for current frame
+    // Cached player weapon & helmet device state for current frame
     private static int _lastPlayerStateFrame = -1;
     private static bool _isFlashlightOn;
     private static bool _isLaserOn;
@@ -64,48 +65,49 @@ public static class LightDetectionService
         _isInfrared = false;
         _hasLaserHit = false;
 
-        _emitterPos = player.WeaponRoot != null ? player.WeaponRoot.position : player.Position + Vector3.up * 1.4f;
+        // Default emitter position and direction from weapon or eye level
+        _emitterPos = player.WeaponRoot != null ? player.WeaponRoot.position : player.Position + Vector3.up * 1.5f;
         _emitterForward = player.LookDirection;
 
-        // Query active weapon lights
-        var lights = player.gameObject.GetComponentsInChildren<Light>(false);
-        if (lights != null)
+        // 1. Query active flashlights via reusable static buffer (covers weapon and helmet mounts)
+        s_LightBuffer.Clear();
+        player.gameObject.GetComponentsInChildren(false, s_LightBuffer);
+        for (int i = 0; i < s_LightBuffer.Count; i++)
         {
-            foreach (var l in lights)
+            var l = s_LightBuffer[i];
+            if (l != null && l.enabled && l.intensity > 0.05f)
             {
-                if (l != null && l.enabled && l.intensity > 0.05f)
-                {
-                    _isFlashlightOn = true;
-                    _emitterPos = l.transform.position;
-                    _emitterForward = l.transform.forward;
-                    break;
-                }
+                _isFlashlightOn = true;
+                _emitterPos = l.transform.position;
+                _emitterForward = l.transform.forward;
+                break;
             }
         }
+        s_LightBuffer.Clear();
 
-        // Query active weapon lasers via LineRenderer
-        var lines = player.gameObject.GetComponentsInChildren<LineRenderer>(false);
-        if (lines != null)
+        // 2. Query active lasers via reusable static buffer (covers weapon and helmet mounts)
+        s_LineBuffer.Clear();
+        player.gameObject.GetComponentsInChildren(false, s_LineBuffer);
+        for (int i = 0; i < s_LineBuffer.Count; i++)
         {
-            foreach (var line in lines)
+            var line = s_LineBuffer[i];
+            if (line != null && line.enabled && line.gameObject.activeInHierarchy)
             {
-                if (line != null && line.enabled && line.gameObject.activeInHierarchy)
-                {
-                    _isLaserOn = true;
-                    _emitterPos = line.transform.position;
-                    _emitterForward = line.transform.forward;
+                _isLaserOn = true;
+                _emitterPos = line.transform.position;
+                _emitterForward = line.transform.forward;
 
-                    string name = line.gameObject.name.ToLower();
-                    if (name.Contains("ir") || name.Contains("infra"))
-                    {
-                        _isInfrared = true;
-                    }
-                    break;
+                string name = line.gameObject.name.ToLower();
+                if (name.Contains("ir") || name.Contains("infra"))
+                {
+                    _isInfrared = true;
                 }
+                break;
             }
         }
+        s_LineBuffer.Clear();
 
-        // If laser is active, trace one single forward raycast for the whole frame
+        // 3. Trace single forward raycast if laser is active
         if (_isLaserOn)
         {
             int mask = LayerMaskClass.HighPolyWithTerrainMask;
@@ -178,6 +180,9 @@ public static class LightDetectionService
         {
             return false;
         }
+
+        // Auto-register bot in active registry for fast gunshot lookups
+        BotRegistry.Register(bot);
 
         int botId = bot.Id;
 
