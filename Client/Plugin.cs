@@ -7,7 +7,9 @@ namespace BOT_Light_Laser_Vision;
 
 [BepInPlugin("com.ethical.botlightlaservision", "BOT-Light-Laser-Vision", "1.0.0")]
 [BepInDependency("xyz.drakia.bigbrain", BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency("xyz.drakia.waypoints", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("me.sol.sain", BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency("com.ethical.botbushblocker", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("com.fika.headless", BepInDependency.DependencyFlags.SoftDependency)]
 public class Plugin : BaseUnityPlugin
 {
