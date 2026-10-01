@@ -1,0 +1,87 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>BOT_Light_Laser_Vision</RootNamespace>
+    <AssemblyName>BOT-Light-Laser-Vision</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+
+    <!-- Output -->
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <!-- Build Settings -->
+    <Deterministic>true</Deterministic>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!-- Directories -->
+  <PropertyGroup>
+    <TarkovDir Condition=" '$(TarkovDir)' == '' ">G:\games\spTarkov_4_0_8\</TarkovDir>
+    <TarkovPluginsSPTDir>$(TarkovDir)BepInEx\plugins\spt\</TarkovPluginsSPTDir>
+    <TarkovManagedDir>$(TarkovDir)EscapeFromTarkov_Data\Managed\</TarkovManagedDir>
+    <TarkovBepInExCoreDir>$(TarkovDir)BepInEx\core\</TarkovBepInExCoreDir>
+    <LocalLibDir Condition=" '$(LocalLibDir)' == '' ">..\..\BotBushBlocker\Client\bin\Release\</LocalLibDir>
+  </PropertyGroup>
+
+  <!-- References -->
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath Condition="Exists('$(TarkovBepInExCoreDir)0Harmony.dll')">$(TarkovBepInExCoreDir)0Harmony.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovBepInExCoreDir)0Harmony.dll')">$(LocalLibDir)0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath Condition="Exists('$(TarkovBepInExCoreDir)BepInEx.dll')">$(TarkovBepInExCoreDir)BepInEx.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovBepInExCoreDir)BepInEx.dll')">$(LocalLibDir)BepInEx.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath Condition="Exists('$(TarkovManagedDir)Assembly-CSharp.dll')">$(TarkovManagedDir)Assembly-CSharp.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovManagedDir)Assembly-CSharp.dll')">$(LocalLibDir)Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Comfort">
+      <HintPath Condition="Exists('$(TarkovManagedDir)Comfort.dll')">$(TarkovManagedDir)Comfort.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovManagedDir)Comfort.dll')">$(LocalLibDir)Comfort.dll</HintPath>
+    </Reference>
+    <Reference Include="Comfort.Unity">
+      <HintPath Condition="Exists('$(TarkovManagedDir)Comfort.Unity.dll')">$(TarkovManagedDir)Comfort.Unity.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovManagedDir)Comfort.Unity.dll')">$(LocalLibDir)Comfort.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="Spt.Common">
+      <HintPath Condition="Exists('$(TarkovPluginsSPTDir)spt-common.dll')">$(TarkovPluginsSPTDir)spt-common.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovPluginsSPTDir)spt-common.dll')">$(LocalLibDir)spt-common.dll</HintPath>
+    </Reference>
+    <Reference Include="Spt.Reflection">
+      <HintPath Condition="Exists('$(TarkovPluginsSPTDir)spt-reflection.dll')">$(TarkovPluginsSPTDir)spt-reflection.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovPluginsSPTDir)spt-reflection.dll')">$(LocalLibDir)spt-reflection.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath Condition="Exists('$(TarkovManagedDir)UnityEngine.dll')">$(TarkovManagedDir)UnityEngine.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovManagedDir)UnityEngine.dll')">$(LocalLibDir)UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath Condition="Exists('$(TarkovManagedDir)UnityEngine.CoreModule.dll')">$(TarkovManagedDir)UnityEngine.CoreModule.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovManagedDir)UnityEngine.CoreModule.dll')">$(LocalLibDir)UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath Condition="Exists('$(TarkovManagedDir)UnityEngine.PhysicsModule.dll')">$(TarkovManagedDir)UnityEngine.PhysicsModule.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovManagedDir)UnityEngine.PhysicsModule.dll')">$(LocalLibDir)UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AIModule">
+      <HintPath Condition="Exists('$(TarkovManagedDir)UnityEngine.AIModule.dll')">$(TarkovManagedDir)UnityEngine.AIModule.dll</HintPath>
+      <HintPath Condition="!Exists('$(TarkovManagedDir)UnityEngine.AIModule.dll')">$(LocalLibDir)UnityEngine.AIModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Post-Build Actions -->
+  <Target Name="PostBuild" AfterTargets="Build">
+    <ItemGroup>
+      <OutputDLL Include="$(TargetPath)" />
+    </ItemGroup>
+
+    <!-- Copy to Tarkov plugin directory if available -->
+    <Copy SourceFiles="@(OutputDLL)" DestinationFolder="$(TarkovDir)BepInEx\plugins\BOT-Light-Laser-Vision\" Condition="Exists('$(TarkovDir)')" ContinueOnError="true" />
+  </Target>
+
+</Project>

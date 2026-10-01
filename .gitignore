@@ -1,0 +1,15 @@
+## Visual Studio and .NET Core
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider / Resharper
+.idea/
+*.DotSettings.user
+
+## OS Files
+.DS_Store
+Thumbs.db
