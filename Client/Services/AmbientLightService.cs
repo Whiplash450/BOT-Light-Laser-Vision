@@ -83,4 +83,51 @@ public static class AmbientLightService
         float contrastRatio = deviceLux / (ambientLux + 0.05f);
         return contrastRatio >= threshold;
     }
+
+    public static bool IsNighttime()
+    {
+        if (TOD_Sky.Instance != null)
+        {
+            return TOD_Sky.Instance.IsNight;
+        }
+        return GetCurrentSunIntensity() < 0.20f;
+    }
+
+    public static float GetMoonlightIntensity()
+    {
+        if (TOD_Sky.Instance != null && TOD_Sky.Instance.IsNight)
+        {
+            return Mathf.Clamp01(TOD_Sky.Instance.LightIntensity);
+        }
+        return 0f;
+    }
+
+    public static float CalculateEffectiveSightDistance(Vector3 botPos, Vector3 targetPos, float baseCap, float maxHardCap)
+    {
+        if (!IsNighttime())
+        {
+            return maxHardCap;
+        }
+
+        // Sample ambient irradiance (includes moonlight and local artificial light probes)
+        float targetLux = GetAmbientLuminanceAt(targetPos);
+        float botLux = GetAmbientLuminanceAt(botPos);
+
+        // Target Illumination scaling:
+        // Deep darkness (~0.05 lux) stays near baseCap.
+        // Ambient moonlight or floodlights (0.15 - 0.40+ lux) scale sight up towards maxHardCap.
+        float illuminationFactor = Mathf.Clamp01((targetLux - 0.05f) / 0.35f);
+        float sightDist = Mathf.Lerp(baseCap, maxHardCap, illuminationFactor);
+
+        // Observer Glare / Pupil Adaptation:
+        // When a bot stands under bright lights (rooftop floodlights) and targets darkness,
+        // constricted pupils reduce the bot's ability to resolve dark silhouettes.
+        if (botLux > 0.25f && targetLux < botLux)
+        {
+            float glareRatio = Mathf.Clamp01((botLux - targetLux) / 0.50f);
+            sightDist *= (1.0f - glareRatio * 0.40f);
+        }
+
+        return Mathf.Clamp(sightDist, baseCap * 0.70f, maxHardCap);
+    }
 }

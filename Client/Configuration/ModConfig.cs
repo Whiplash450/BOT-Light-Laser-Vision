@@ -21,6 +21,13 @@ public static class ModConfig
     public static ConfigEntry<bool> NvgDistanceScalingEnabled { get; private set; }
     public static ConfigEntry<float> RainSnowNvgDistanceCap { get; private set; }
 
+    // Naked Eye & Mounted Weapon Night Vision
+    public static ConfigEntry<float> MountedRogueVisionCap { get; private set; }
+    public static ConfigEntry<bool> StationaryWeaponNightClampingEnabled { get; private set; }
+    public static ConfigEntry<float> StationaryWeaponNightDistanceCap { get; private set; }
+    public static ConfigEntry<float> NakedEyeNightDistanceCap { get; private set; }
+    public static ConfigEntry<bool> EnableComparativeLightCheck { get; private set; }
+
     // Dazzle & Blackout
     public static ConfigEntry<bool> DynamicBlindnessEnabled { get; private set; }
     public static ConfigEntry<float> NvgTubeBlackoutMinSeconds { get; private set; }
@@ -57,6 +64,12 @@ public static class ModConfig
 
         NvgDistanceScalingEnabled = config.Bind("4. NVG Tiers & Weather", "NvgDistanceScalingEnabled", true, "Scale bot ambient night vision distance by NVG quality.");
         RainSnowNvgDistanceCap = config.Bind("4. NVG Tiers & Weather", "RainSnowNvgDistanceCap", 15.0f, "Severely cut ambient night vision range during active rain or snow storms.");
+
+        MountedRogueVisionCap = config.Bind("4.1 Naked Eye & Mounted Weapons", "MountedRogueVisionCap", 100.0f, "Maximum night vision distance for Rogues on mounted weapons (iron sights).");
+        StationaryWeaponNightClampingEnabled = config.Bind("4.1 Naked Eye & Mounted Weapons", "StationaryWeaponNightClampingEnabled", true, "Clamp night vision distance for any bot operating a stationary weapon.");
+        StationaryWeaponNightDistanceCap = config.Bind("4.1 Naked Eye & Mounted Weapons", "StationaryWeaponNightDistanceCap", 60.0f, "Maximum night sight distance for standard bots on mounted guns.");
+        NakedEyeNightDistanceCap = config.Bind("4.1 Naked Eye & Mounted Weapons", "NakedEyeNightDistanceCap", 35.0f, "Baseline naked-eye spotting distance in pitch black darkness.");
+        EnableComparativeLightCheck = config.Bind("4.1 Naked Eye & Mounted Weapons", "EnableComparativeLightCheck", true, "Compare ambient light between bot and player, factoring moonlight and glare.");
 
         DynamicBlindnessEnabled = config.Bind("5. Dazzle & NVG Blackout", "DynamicBlindnessEnabled", true, "Enable dynamic blindness and bright source protection tube cutoff.");
         NvgTubeBlackoutMinSeconds = config.Bind("5. Dazzle & NVG Blackout", "NvgTubeBlackoutMinSeconds", 0.75f, "Minimum duration of tube shutdown when struck directly by laser.");

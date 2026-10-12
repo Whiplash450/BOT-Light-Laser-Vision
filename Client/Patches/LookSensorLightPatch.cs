@@ -63,11 +63,11 @@ public class LookSensorLightPatch : ModulePatch
         // Evaluate NVG Profile
         NVGProfile nvgProfile = NVGProfile.EvaluateBotNVG(bot);
 
-        // 2. Weather & NVG Distance Clamping for Ambient Sight
+        float dist = Vector3.Distance(from.Position, to.Position);
+
+        // 2. Weather & NVG Distance Clamping for Bots with NVG
         if (ModConfig.NvgDistanceScalingEnabled.Value && nvgProfile.Tier != NVGQualityTier.None)
         {
-            float dist = Vector3.Distance(from.Position, to.Position);
-
             // Severe rain / snow storm clamps ambient sight down to 15m
             if (AmbientLightService.IsSevereWeatherActive())
             {
@@ -83,8 +83,97 @@ public class LookSensorLightPatch : ModulePatch
                 return;
             }
         }
+        // 3. Naked Eye, Mounted Rogue, and Stationary Weapon Night Vision Clamping
+        else if (nvgProfile.Tier == NVGQualityTier.None && AmbientLightService.IsNighttime())
+        {
+            bool isRogue = bot.Profile?.Info?.Settings?.Role == WildSpawnType.exUsec;
+            bool isMounted = IsMountedOnStationaryWeapon(bot, from);
 
-        // 3. Process Light and Laser Reaction (Lighthouse beacon, transverse beams, cone alerts)
+            // A. Hard ceiling for mounted Rogues at night (100m cap)
+            if (isRogue && isMounted)
+            {
+                float rogueCap = ModConfig.MountedRogueVisionCap.Value;
+                if (dist > rogueCap)
+                {
+                    __result = false;
+                    return;
+                }
+            }
+            // B. General stationary weapon night distance clamp for standard bots
+            else if (isMounted && ModConfig.StationaryWeaponNightClampingEnabled.Value)
+            {
+                float stationaryCap = ModConfig.StationaryWeaponNightDistanceCap.Value;
+                if (dist > stationaryCap)
+                {
+                    __result = false;
+                    return;
+                }
+            }
+
+            // C. Comparative ambient light check for naked-eye vision (scales with moonlight & glare)
+            if (ModConfig.EnableComparativeLightCheck.Value && !LightDetectionService.IsAnyDeviceActive())
+            {
+                float baseCap = ModConfig.NakedEyeNightDistanceCap.Value;
+                float hardCeiling = (isRogue && isMounted) ? ModConfig.MountedRogueVisionCap.Value : 85.0f;
+
+                float maxAllowedSight = AmbientLightService.CalculateEffectiveSightDistance(
+                    from.Position,
+                    to.Position,
+                    baseCap,
+                    hardCeiling
+                );
+
+                if (dist > maxAllowedSight)
+                {
+                    __result = false;
+                    return;
+                }
+            }
+        }
+
+        // 4. Process Light and Laser Reaction (Lighthouse beacon, transverse beams, cone alerts)
         LightDetectionService.EvaluateBotLightReaction(bot, to, nvgProfile);
+    }
+
+    private static bool IsMountedOnStationaryWeapon(BotOwner bot, Player player)
+    {
+        if (player == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (player.OnHisWayToOperateStationaryWeapon)
+            {
+                return true;
+            }
+
+            if (player.HandsController != null)
+            {
+                string controllerName = player.HandsController.GetType().Name;
+                if (controllerName.IndexOf("Stationary", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+
+                if (player.HandsController is Player.ItemHandsController itemHands && itemHands.Item != null)
+                {
+                    string itemName = itemHands.Item.ShortName?.ToLower() ?? string.Empty;
+                    string templateId = itemHands.Item.TemplateId.ToString();
+                    if (templateId == "5d52cc5a86f77405c45388c4" || templateId == "5d52cc6b86f77405c45388c7" ||
+                        itemName.Contains("nsv") || itemName.Contains("ags") || itemName.Contains("utes"))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Fall back
+        }
+
+        return false;
     }
 }
